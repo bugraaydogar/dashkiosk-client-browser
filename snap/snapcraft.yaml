@@ -5,8 +5,16 @@ description: |
   This is a snap that automatically looks for a dashkiossk instance in your lan
   using avahi and automagically connectss to it.
 
+base: core18 
+
 grade: stable
 confinement: strict
+
+
+layout:
+  /usr/share:
+    bind: $SNAP/usr/share
+
 
 apps:
   dashkiosk-browser:
@@ -38,8 +46,62 @@ apps:
 plugs:
   x11-plug:
     interface: x11
+  gnome-3-28-1804:
+    interface: content
+    target: $SNAP/gnome-platform
+    default-provider: gnome-3-28-1804
+  gtk-3-themes:
+    interface: content
+    target: $SNAP/data-dir/themes
+    default-provider: gtk-common-themes
+  icon-themes:
+    interface: content
+    target: $SNAP/data-dir/icons
+    default-provider: gtk-common-themes
+  sound-themes:
+    interface: content
+    target: $SNAP/data-dir/sounds
+    default-provider: gtk-common-themes
+
+
 
 parts:
+
+  desktop-gtk3:
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-subdir: gtk
+    plugin: make
+    make-parameters: ["FLAVOR=gtk3"]
+    build-packages:
+      - build-essential
+      - libgtk-3-dev
+    stage-packages:
+      - libxkbcommon0  # XKB_CONFIG_ROOT
+      - ttf-ubuntu-font-family
+      - dmz-cursor-theme
+      - light-themes
+      - adwaita-icon-theme
+      - gnome-themes-standard
+      - shared-mime-info
+      - libgtk-3-0
+      - libgdk-pixbuf2.0-0
+      - libglib2.0-bin
+      - libgtk-3-bin
+      - unity-gtk3-module
+      - libappindicator3-1
+      - locales-all
+      - xdg-user-dirs
+      - ibus-gtk3
+      - libibus-1.0-5  
+
+
+  xwayland-kiosk-helper:
+    plugin: cmake
+    source: https://github.com/MirServer/xwayland-kiosk-helper.git
+    build-packages: [ build-essential ]
+    stage-packages: [ xwayland, i3, libegl1-mesa, libgl1-mesa-glx ]
+
+
   chromium:
     source: .
     plugin: nil
@@ -54,3 +116,8 @@ parts:
       cp -av xwayland-dashkiosk-launch $SNAPCRAFT_PART_INSTALL/bin/
       cp -av i3.config $SNAPCRAFT_PART_INSTALL/
     after: [desktop-gtk3, xwayland-kiosk-helper]
+
+  # matchbox-keyboard:
+  #   plugin: nil
+  #   stage-packages:
+  #     - matchbox-keyboard
